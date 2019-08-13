@@ -1,0 +1,109 @@
+# Environmental Justice Policy 2017
+
+In 2014, then Massachusetts Governor Deval Patrick issued an [Executive Order of Environmental Justice](http://www.mass.gov/courts/docs/lawlib/eo500-599/eo552.pdf) which required EEA to update its original Environmental Justice Policy within 60 days of the order. Two years later, EEA finally released an [updated Environmental Justice Policy](https://www.mass.gov/files/documents/2017/11/29/2017-environmental-justice-policy_0.pdf). The 2017 Environmental Justice Policy continued with the three de facto demographic criteria for defining environmental justice communities. Specifically, the 2017 policy defined environmental justice communities as 
+
+> neighborhoods (U.S. Census Bureau census block group data for minority criteria, and American Community Survey (ACS) data for state median income and English isolation criteria) that meet *one or more* of the following criteria:
+
+> * 25 percent of households within the census block group have a median annual household income at or below 65 percent of the statewide median income for Massachusetts; or
+* 25 percent or more of the residents are minority; or
+* 25 percent or more of the residents have English Isolation
+
+Curiously, the 2017 policy redefined how income is measured. Where the previous policy identified the income criterion based on the median income of the block group, the 2017 policy based it on the *percentage of households within the block group* with incomes at or below 65% of the statewide median. This change in measurement has significant implications. The most obvious impact is that it dramatically increases the number of block groups that qualify as environmental justice communities under the Income criterion. Using this definition and the American Community Survey 5-year Estimates for 2013-2017 for block groups in Massachusetts, we find that the percentage of Massachusetts block groups classified as environmental justice communities jumps from 44% under the previous policy to `r {round(sum(blkgrp_shp_WGS84$CRITCNT > 0) / nrow(blkgrp_shp_WGS84) * 100,0)}`% under the 2017 policy. In other words, nearly three-fourths of the state becomes an environmental justice community.  Most of this growth is a result of the redefined Income criterion. This classification can be visualized in Figure \@ref(fig:treemap2017) below, which shows the relative proportion of block groups that fall into each category or combination of environmental justice criteria. Notice that the Income criterion now becomes the dominant environmental justice community criterion. 
+On a more technical level, the choice to measure income based on the number or percentage of households below the income threshold also reduces the precision of the measurement. This is because the ACS reports the number of households by income in wide ranges that do not necessarily coincide with the desired threshold. For example, the environmental justice Income criterion is 65% of the statewide median household income, which for the ACS 5-year 2017 period would be $48,208. The closest income range reported by the ACS is \$45,000 to \$49,999. It is therefore not possible to report the number or percentage of households meeting a particular median household income with any greater precision.  
+
+```{r treemap2017, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.cap="Tree map of block groups classified as environmental justice by 2017 policy."}
+# Create a tree map  with treemapify
+# First, you need to generate a summary df with one value per observation or EJ criterion
+blkgrp_shp_WGS84 %>% 
+  mutate(EJCRIT = case_when(EJCRIT == "E  M" ~ "Minority and English Isolation",
+                            EJCRIT == "E I" ~ "Income and English Isolation",
+                            EJCRIT == "E I M" ~ "Minority, Income, and English Isolation",
+                            EJCRIT == "I" ~ "Income",
+                            EJCRIT == "I M" ~ "Minority and Income",
+                            EJCRIT == "M" ~ "Minority",
+                            EJCRIT == "" ~ "Not EJ")) %>% 
+  group_by(EJCRIT) %>% 
+  summarize(blkgrps = n()) %>% 
+  mutate(percent = blkgrps/sum(blkgrps)*100) %>% 
+  ggplot(aes(area = percent, fill=EJCRIT, label = paste(EJCRIT,paste(round(percent,1),"%"),sep="\n"))) + 
+  scale_fill_manual(name = "Environmental Justice Criteria", 
+                    values = c("lawngreen","cyan","gold","deeppink","darkgreen","navyblue","gray88")) +
+  labs(title = "Massachusetts Census Blockgroups Meeting 2017 Environmental Justice Criteria",
+       caption = "Based on 2017 MA EJ Policy and ACS 5yr 2017 Blockgroup Estimates") +
+  geom_treemap() + 
+  geom_treemap_text(color = "white", place = "centre", grow = TRUE)
+```
+
+These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. Note how the Income criterion for the 2017 EJ policy captures nearly all of western Massachusetts. Certainly it reveals a significant difference incoome between western and eastern Massachusetts, but it is not clear if this was the intended outcome for environmental justice designations. 
+
+```{r map2017, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Map of block groups classified as environmental justice by 2017 policy."}
+# draw the map of EJ Polygons according to 2017 policy
+# create df without "" in EJCRIT for setting up color palette
+blkgrp_shp_WGS84_naEJCRIT <- blkgrp_shp_WGS84 %>%
+  select(NAME,TOWN,EJCRIT,pctminority,medhhincE,pctmedhhinc_lt50,pctlimitenghh) %>% 
+  filter(EJCRIT !="")
+# set up color palette with colors in order of criteria, which are in alphabetical order by default
+# sort(unique(blkgrp_shp_WGS84_naEJCRIT2010$EJCRIT)) # confirm order of criteria
+EJ2017pal <- colorFactor(palette = c("deeppink","cyan","navyblue","lawngreen","darkgreen","gold"), 
+                         domain = blkgrp_shp_WGS84_naEJCRIT$EJCRIT)
+# Create popup. NOTE THAT POPUP AND PALETTE MUST BE CREATED FROM EXACT SAME DF AS USED IN leaflet() MAP. OTHERWISE, POPUPS WILL SHOW UP IN THE WRONG LOCATION!
+EJ2017PopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT$NAME, "<br/>",
+                      "<b>Town:</b> ", blkgrp_shp_WGS84_naEJCRIT$TOWN, "<br/>",
+                      "<b>2017 EJ Criteria Met:</b> ", blkgrp_shp_WGS84_naEJCRIT$EJCRIT, "<br/>",
+                      "<b>ACS 5yr 2017</b> ", "<br/>",
+                      "<b>% Minority: </b>", round(blkgrp_shp_WGS84_naEJCRIT$pctminority,1),"<br/>",
+                      "<b>Median Household Income: </b>", paste0("$",round(blkgrp_shp_WGS84_naEJCRIT$medhhincE)),"<br/>",
+                      "<b>% Households with Income < $50k: </b>", round(blkgrp_shp_WGS84_naEJCRIT$pctmedhhinc_lt50,1),"<br/>",
+                      "<b>% Limited English Households: </b>", round(blkgrp_shp_WGS84_naEJCRIT$pctlimitenghh,1))
+
+TownMedIncPopUp <- paste0("<b>Town:</b> ", macosub_shp_WGS84$TOWN, "<br/>",
+                          "<b>Median Household Income: </b>", paste0("$",round(macosub_shp_WGS84$medhhinc)))
+
+leaflet() %>% 
+  addProviderTiles(providers$Stamen.TonerLite) %>% 
+  addPolygons(data = town_shp_WGS84,
+              weight = 0.7,
+              opacity = 1,
+              color = "gray",
+              fillOpacity = 0,
+              label=~TOWN, popup=~TOWN, group='muni') %>% 
+  addPolygons(data = macosub_shp_WGS84,
+              weight = 2,
+              opacity = 1,
+              color = "blue",
+              fillOpacity = 0.1,
+              fillColor = "blue",
+              label = ~TOWN,popup = TownMedIncPopUp,
+              group = "Top 20% Median Household Income") %>% 
+  addPolygons(data = blkgrp_shp_WGS84_naEJCRIT,
+              fillColor = ~EJ2017pal(EJCRIT), 
+              weight = 0.5,
+              opacity = 0.7,
+              color = "white",
+              dashArray = 3,
+              fillOpacity = 0.7,
+              label=~TOWN, 
+              popup = EJ2017PopUp,
+              highlight = highlightOptions(
+                weight = 5,
+                color = "#666",
+                dashArray = "",
+                fillOpacity = 0.7,
+                bringToFront = TRUE)) %>% 
+  addLegend(colors = EJcolsHex, 
+            labels = c("Minority","Income","English Isolation","Minority and Income","Minority and English Isolation","Income and English Isolation","Minority, Income, and English Isolation"), title = "Environmental Justice Populations", position = "bottomleft") %>% 
+  setView(lng = -72, 42.1, zoom = 8) %>% 
+  # addMiniMap() %>% 
+  addScaleBar(position = "bottomright") %>% 
+  addSearchFeatures(targetGroups  = 'muni', 
+                    options = searchFeaturesOptions(zoom=14, openPopup=TRUE, hideMarkerOnCollapse=T)) %>% 
+  addLayersControl(
+    overlayGroups = c("Top 20% Median Household Income"),
+    options = layersControlOptions(collapsed = TRUE)
+  ) %>% hideGroup("Top 20% Median Household Income")
+```
+
+The 2017 policy appears to have complicated the issue by greatly expanding the number of communities qualifying as environmental justice because of the modified measurement of income. 
+
+The following analyses therefore ignore the 2017 Income criterion and use the previous de facto 2010-2016 Environmental Justice Policy as a benchmark of comparison for several alternative environmental justice community criteria.
+

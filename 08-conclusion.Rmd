@@ -1,0 +1,20 @@
+# Conclusion
+
+This analysis evaluated alternative environmental justice community criteria, comparing them to the benchmark environmental justice criteria used by Massachusetts between 2010 - 2016. The evaluations considered increasing the Minority criterion from 25% to 30% and 50%, and also adding modifiers to the existing criteria, such that no community can be classified as an environmental justice community if its income exceeds 125% of the statewide median household income, or if the adult population with a college degree exceeds 50%.  Geographically, adding more stringent criteria results in "lost" environmental justice classifications primarily in the eastern third of the state, and primarily within the I-495 belt. In order to compare these policy implications, the number and proportion of lost environmental justice classifications were considered with regard to whether or not they occurred within the wealthiest fifth of municipalities. These results are summarized in the table below.
+
+```{r conclusion, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Table 1. Environmental Justice Policy Criteria Statistics."}
+Policy <- c("2010-16","2017","Alt A","Alt B","Alt C","Alt D")
+Change <- c("None","None","Minority >= 30%", "Minority >= 50%","Income <= 125%","Income <= 125% & College <= 50%")
+PctEJPop <- c(43,70.4,38.6,26.7,33.9,29.9)
+LostEJ <- c(NA,NA,224,782,462,646)
+LostWealthy <- c(NA,NA,59,156,137,162)
+finalResults <- data.frame(Policy,Change,PctEJPop,LostEJ,LostWealthy)
+finalResults <- finalResults %>% 
+  mutate(PctLostWealthy = round(LostWealthy/LostEJ*100,1))
+
+kable(finalResults)
+```
+
+Alternative Policy B results in the greatest number of total lost environmental justice classifications, but it is relatively inefficient becuase only a small percentage of these lost EJ classifications are removed from the wealthiest communities. By contrast, Alternative Policy D results in the greatest number of lost environmental justice classifications in the wealthiest communities. However, Alternative Policy C is arguably the most efficient option because it shows the greatest percentage of lost environmental justice classifications from wealthy communities, while losing only sightly less in total than Policy D. 
+
+Policy C offers the most "efficient" implications, removing a high number of environmental justice designations, a large proportion of which occur in wealthy communities where one would not expect to find environmental justice issues. 

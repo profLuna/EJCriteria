@@ -1,0 +1,96 @@
+# Environmental Justice Policy 2010 - 2016
+
+The de facto Massachusetts environmental justice policy for 2010-2016 defined environmental justice communities as neighborhoods (U.S. Census Bureau census block groups) that meet *one or more* of the following criteria: 
+
+* The median annual household income is at or below 65 percent of the statewide median income for Massachusetts; *or*
+* 25 percent of the residents are minority; *or*
+* 25 percent of the residents are lacking English language proficiency.
+
+Using this definition and the American Community Survey 5-year Estimates for 2013-2017 for block groups in Massachusetts, we find that `r {round(sum(blkgrp_shp_WGS84$CRITCNT2010 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)}`% of Massachusetts block groups are classified as environmental justice communities. This classification can be visualized in Figure \@ref(fig:treemap2010) below, which shows the percentage of block groups that fall into each category or combination of environmental justice criteria.
+
+```{r treemap2010, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.cap="Tree map of block groups classified as environmental justice by 2010-2016 policy."}
+# Create a tree map with treemapify
+# library(treemapify)
+# First, you need to generate a summary df with one value per observation or EJ criterion
+blkgrp_shp_WGS84 %>% 
+  mutate(EJCRIT2010 = case_when(EJCRIT2010 == "E" ~ "English Isolation",
+                                    EJCRIT2010 == "E  M" ~ "Minority and English Isolation", 
+                                    EJCRIT2010 == "E I" ~ "Income and English Isolation",
+                                    EJCRIT2010 == "E I M" ~ "Minority, Income, and English Isolation",
+                                    EJCRIT2010 == "I" ~ "Income",
+                                    EJCRIT2010 == "I M" ~ "Minority and Income",
+                                    EJCRIT2010 == "M" ~ "Minority",
+                                    EJCRIT2010 == "" ~ "Not EJ")) %>% 
+  group_by(EJCRIT2010) %>% 
+  summarize(blkgrps = n()) %>% 
+  mutate(percent = blkgrps/sum(blkgrps)*100) %>% 
+  ggplot(aes(area = percent, fill=EJCRIT2010, label = paste(EJCRIT2010,paste(round(percent,1),"%"),sep="\n"))) + 
+  scale_fill_manual(name = "Environmental Justice Criteria", 
+                    values = c("lightskyblue","lawngreen","cyan","gold","deeppink","darkgreen","navyblue","gray88")) +
+  labs(title = "Massachusetts Census Blockgroups Meeting 2010 Environmental Justice Criteria",
+       caption = "Based on 2010 MA EJ Policy and ACS 5yr 2017 Blockgroup Estimates") +
+  geom_treemap() + 
+  geom_treemap_text(color = "white", place = "centre", grow = TRUE)
+```
+
+These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool (whtie box in upper left of map) and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. 
+
+```{r map2010, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Map of block groups classified as environmental justice by 2010-2016 policy."}
+# Create map of 2010 EJ policy polygons across state
+# create df without "" in EJCRIT2010 for setting up color palette
+blkgrp_shp_WGS84_naEJCRIT2010 <- blkgrp_shp_WGS84 %>%
+  select(NAME,TOWN,EJCRIT2010,pctminority,medhhincE,pctlimitenghh) %>% 
+  filter(EJCRIT2010 !="")
+# set up color palette with colors in order of criteria, which are in alphabetical order by default
+# sort(unique(blkgrp_shp_WGS84_naEJCRIT2010EJCRIT2010$EJCRIT2010))# confirm order of criteria
+EJ2010pal <- colorFactor(palette = c("lightskyblue","deeppink","cyan","navyblue","lawngreen","darkgreen","gold"), 
+                         domain = blkgrp_shp_WGS84_naEJCRIT2010$EJCRIT2010)
+
+# create vector colors in order to be used in legend
+EJcols <- c("gold","lawngreen","lightskyblue","darkgreen","deeppink","cyan","navyblue")
+# convert named colors to hexadecimal
+EJcolsHex <- col2hex(EJcols)
+
+# Create popup. NOTE THAT POPUP AND PALETTE MUST BE CREATED FROM EXACT SAME DF AS USED IN leaflet() MAP. OTHERWISE, POPUPS WILL SHOW UP IN THE WRONG LOCATION!
+EJ2010PopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT2010$NAME, "<br/>",
+                      "<b>Town:</b> ", blkgrp_shp_WGS84_naEJCRIT2010$TOWN, "<br/>",
+                      "<b>2010 EJ Criteria Met:</b> ", blkgrp_shp_WGS84_naEJCRIT2010$EJCRIT2010, "<br/>",
+                      "<b>ACS 5yr 2017</b> ", "<br/>",
+                      "<b>% Minority: </b>", round(blkgrp_shp_WGS84_naEJCRIT2010$pctminority,1),"<br/>",
+                      "<b>Median Household Income: </b>", paste0("$",round(blkgrp_shp_WGS84_naEJCRIT2010$medhhincE)),"<br/>",
+                      "<b>% Limited English Households: </b>", round(blkgrp_shp_WGS84_naEJCRIT2010$pctlimitenghh,1))
+
+# draw the map of EJ Polygons according to 2010 policy
+leaflet() %>% 
+  addProviderTiles(providers$Stamen.TonerLite) %>% 
+  addPolygons(data = town_shp_WGS84,
+              weight = 0.7,
+              opacity = 1,
+              color = "gray",
+              fillOpacity = 0,
+              label=~TOWN, popup=~TOWN, group='muni') %>% 
+  addPolygons(data = blkgrp_shp_WGS84_naEJCRIT2010,
+              fillColor = ~EJ2010pal(EJCRIT2010), 
+              weight = 0.5,
+              opacity = 0.7,
+              color = "white",
+              dashArray = 3,
+              fillOpacity = 0.7,
+              label=~TOWN, 
+              popup = EJ2010PopUp,
+              highlight = highlightOptions(
+                weight = 5,
+                color = "#666",
+                dashArray = "",
+                fillOpacity = 0.7,
+                bringToFront = TRUE)) %>% 
+  addLegend(colors = EJcolsHex, 
+            labels = c("Minority","Income","English Isolation","Minority and Income","Minority and English Isolation","Income and English Isolation","Minority, Income, and English Isolation"), title = "Environmental Justice Populations", position = "bottomleft") %>% 
+  setView(lng = -72, 42.1, zoom = 8) %>% 
+  # addMiniMap() %>% 
+  addScaleBar(position = "bottomright") %>% 
+  addSearchFeatures(targetGroups  = 'muni', 
+                    options = searchFeaturesOptions(zoom=14, openPopup=TRUE, hideMarkerOnCollapse=T))
+```
+
+

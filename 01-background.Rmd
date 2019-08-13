@@ -1,0 +1,213 @@
+# Background {#background}
+
+In 2002, the Massachusetts Executive Office of Environmental Affairs (now the Office of Energy and Environmental Affairs, or EEA) issued the state's [first policy on Environmental Justice](https://www.mass.gov/files/documents/2017/11/29/ej%20policy%202002.pdf). That policy described Environmental Justice in the following way:
+
+> Environmental justice is based on the principle that all people have a right to be protected from environmental pollution and to live in and enjoy a clean and healthful environment.  Environmental justice is the equal protection and meaningful involvement of all people with respect to the development, implementation, and enforcement of environmental laws, regulations, and policies and the equitable distribution of environmental benefits. 
+
+Due to historic and ongoing discriminatory or disparate treatment of certain communities with regard to environmental health and quality and control, particularly urban, low income, and communities of color, the policy focused on delivering enhanced services to "environmental justice communities."  These services were to "enhance public participation, target compliance and enforcement, enhance the review of new large air sources and regional waste facilities, and encourage economic growth through the cleanup and redevelopment of brownfields sites." The 2002 Environmental Justice policy defined "environemntal justice communities" as neighborhoods (U.S. Census Bureau census block groups) that meet *one or more* of the following criteria: 
+
+* The median annual household income is at or below 65 percent of the statewide median income for Massachusetts; *or*
+* 25 percent of the residents are minority; *or*
+* 25 percent of the residents are foreign born, *or*
+* 25 percent of the residents are lacking English language proficiency.
+
+Although the criteria used to define environmental justice communities were the result of significant disucssion and input from a variety of stakeholders, there was recurring concern that the criteria inappropriately classified some block groups as environmental justice communities. This was particularly the case for the foreign born criterion, which could include wealthier and more highly educated neighborhoods of East and South Asian immigrants. As a result, the foreign born criterion seems to have been quietly dropped from consideration by 2010 based on a review of documents circulating at the time. From 2010 onwards, the de facto environmental justice policy was based on income, percent minority, and percentage of English isolated households. The most recent updated 2017 Environmental Justice policy maintained these three criteria in its defintion of environmental justice communities, albeit with an important change in how income was measured.
+
+The remainder of this analysis looks at the implications of the 2010-2016 policy, the 2017 policy update, and four alterantive environmental justice policies. 
+
+```{r data, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# This is an analysis to investigate impact of different thresholds for EJ communities in Massachusetts
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(tmap)
+library(tmaptools)
+library(leaflet)
+library(leaflet.extras)
+library(gplots)
+library(treemapify)
+library(knitr)
+
+# read in blockgroup and town shapefiles downloaded from MassGIS and reproject to WGS84
+town_shp_WGS84 <- st_read(dsn = "../townssurvey_shp", layer = "TOWNSSURVEY_POLYM", quiet = TRUE) %>% 
+  select(TOWN) %>% 
+  st_transform(., 4326)
+
+blkgrp_shp_WGS84 <- st_read(dsn = "../CENSUS2010_BLK_BG_TRCT_SHP", layer = "CENSUS2010BLOCKGROUPS_POLY", quiet = TRUE) %>% 
+  select(GEOID10) %>% 
+  st_transform(., 4326) %>% 
+  # spatial join towns to blockgroups so that town names are associated with each blockgroup
+  st_join(., town_shp_WGS84, largest = TRUE)
+  
+
+# transform CRS to WGS84 for overlay
+# town_shp_WGS84 <- st_transform(town_shp, 4326)
+
+# spatial join towns to blockgroups so that town names are associated with each blockgroup
+# blkgrp_shp <- blkgrp_shp %>% 
+#   st_join(., town_shp, largest = TRUE)
+
+# Transform the CRS of the original sf object to WGS84 for mapping in Leaflet
+# blkgrp_shp_WGS84 <- st_transform(blkgrp_shp, 4326)
+
+# load tidycensus API key
+census_api_key("f2776fbc29cf847505de9308a82c8d65290d16b3")
+
+# download variables at block group level for Massachusetts; note language isolation missing from tidycensus
+maACS17_blkgrp <- get_acs(geography = "block group", 
+                         variables = c(totalpop = "B03002_001", 
+                                       whitepop = "B03002_003", 
+                                       medhhinc = "B19013_001",
+                                       pop25 = "B15003_001",
+                                       bachelors25 = "B15003_022",
+                                       masters25 = "B15003_023",
+                                       professional25 = "B15003_024",
+                                       doctorate25 = "B15003_025"),
+                         state = "MA", output = "wide")
+
+# download table of counts of household income categories, sum up households in categories below statewide median of $74,167
+maACS17_blkgrp_medhhinc <- get_acs(geography = "block group", 
+                          table = "B19001",
+                          state = "MA", output = "wide") %>% 
+  transmute(GEOID = GEOID,
+            households = B19001_001E,
+            medhhinc_lt50 = B19001_002E+
+              B19001_003E+
+              B19001_004E+
+              B19001_005E+
+              B19001_006E+
+              B19001_007E+
+              B19001_008E+
+              B19001_009E+
+              B19001_010E,
+            medhhinc_lt75 = medhhinc_lt50+
+              B19001_011E+
+              B19001_012E,
+            pctmedhhinc_lt50 = medhhinc_lt50/households*100, # 65% of median is $48,208. Closest range is 45 - 49,9
+            pctmedhhinc_lt75 = medhhinc_lt75/households*100) # statewide median of $74,167. Closest range is 60 - 74,9
+
+# load median household income by county subdivision table B19013 from AFF
+maACS17_towns <- read_csv("../B19013_aff_download/ACS_17_5YR_B19013_with_ann.csv") %>% 
+  transmute(GEO.id2 = as.character(GEO.id2),
+            medhhinc = as.integer(HD01_VD01))
+
+# load MA census town layer from MassGIS, create geoid for joining, and then join median incomes
+macosub_shp_WGS84 <- st_read(dsn = "../CENSUS2010TOWNS_SHP", layer = "CENSUS2010TOWNS_POLY", quiet = TRUE) %>% 
+  transmute(GEOID = paste0(FIPS_STCO,COUSUBFP10), TOWN = TOWN) %>% 
+  left_join(.,maACS17_towns, by = c("GEOID"="GEO.id2")) %>% 
+  filter(medhhinc > quantile(medhhinc,probs = 0.8,na.rm = T)) %>% # retain only top quintile
+  st_transform(., 4326)
+
+# create df with all town names and med hh income for town to join to master df
+maACS17_towns_inc <- st_read(dsn = "../CENSUS2010TOWNS_SHP", layer = "CENSUS2010TOWNS_POLY", quiet = TRUE) %>% 
+  transmute(GEOID = paste0(FIPS_STCO,COUSUBFP10), TOWN = TOWN) %>% 
+  left_join(.,maACS17_towns, by = c("GEOID"="GEO.id2")) %>% 
+  transmute(MUNI_medhhinc = medhhinc, MUNI_pctmedhhinc = medhhinc/74167*100, TOWN = TOWN) %>% 
+  st_drop_geometry()
+
+# remove redundant df
+rm(maACS17_towns)
+
+# load limited English household table C16002 from AFF, fix geoid2, and add variables for limited English speaking households
+langIsol <- read_csv("../C16002_aff_download/ACS_17_5YR_C16002_with_ann.csv") %>% 
+  transmute(GEO.id2 = as.character(GEO.id2),
+         limitenghh = HD01_VD04+HD01_VD07+HD01_VD10+HD01_VD13,
+         pctlimitenghh = limitenghh/HD01_VD01*100)
+
+# add minority, percent minority, and percent college variables and join medhhinc counts and linguistic isolation data
+maACS17_blkgrp <- maACS17_blkgrp %>% 
+  mutate(minoritypop = totalpopE - whitepopE,
+         pctminority = minoritypop/totalpopE*100,
+         pctmedhhinc = medhhincE/74167*100, # MA median hh income in 2017 dollars for 2013-2017 was $74,167
+         pctCollege = (bachelors25E + masters25E + professional25E + doctorate25E)/pop25E*100) %>% 
+  left_join(., maACS17_blkgrp_medhhinc, by = c("GEOID")) %>% 
+  left_join(., langIsol, by = c("GEOID" = "GEO.id2"))
+
+# remove redundant dfs
+rm(maACS17_blkgrp_medhhinc, langIsol)
+
+# join data to spatial layer
+blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>% 
+  left_join(., maACS17_blkgrp, by = c("GEOID10" = "GEOID")) %>% 
+  left_join(., maACS17_towns_inc, by = c("TOWN"))
+
+# add variables to identify existing and proposed EJ criteria
+blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>% 
+  mutate(ENGLISH = if_else(pctlimitenghh >= 25,"E", NULL),
+         INCOME = if_else(pctmedhhinc_lt50 >= 25, "I", NULL),
+         INCOME_medhhinc = if_else(pctmedhhinc <= 65, "I", NULL),
+         MINORITY = if_else(pctminority >= 25, "M", NULL),
+         # MINORITY27.8 = if_else(pctminority >= 27.8, "M", NULL), # statewide percentage minority is 27.8% for 2018
+         MINORITY30 = if_else(pctminority >= 30, "M", NULL), # round up to 30% to see what happens
+         MINORITY40a = if_else(pctminority >= 40 | (pctminority >= 25 & pctmedhhinc <= 150), "M", NULL), # m40 or m25 & inc150
+         MINORITY40b = if_else(pctminority >= 40 | (pctminority >= 25 & MUNI_pctmedhhinc <= 150), "M", NULL), # m40 or m25 & inc150
+         MINORITY50 = if_else(pctminority >= 50, "M", NULL), # round up to 50% to see what happens
+         EJCRIT = paste(ENGLISH, INCOME, MINORITY, sep = " "), # identify EJ criteria met for 2017 policy
+         EJCRIT = str_trim(gsub("NA","",EJCRIT)), # replace NAs with blank space and strip out leading and trailing whitespace
+         CRITCNT = nchar(EJCRIT) - str_count(EJCRIT, " "), # count the number of EJ criteria met for 2017 policy
+         EJCRIT2010 = paste(ENGLISH, INCOME_medhhinc, MINORITY, sep = " "), # identify EJ criteria met for 2010 policy
+         EJCRIT2010 = str_trim(gsub("NA","",EJCRIT2010)), # replace NAs with blank space and strip out leading and trailing whitespace
+         CRITCNT2010 = nchar(EJCRIT2010) - str_count(EJCRIT2010, " "), # count the number of EJ criteria met for 2010 policy
+         EJCRIT_min30 = paste(ENGLISH, INCOME_medhhinc, MINORITY30, sep = " "), # identify EJ criteria met for 2010 modified
+         EJCRIT_min30 = str_trim(gsub("NA","",EJCRIT_min30)), # replace NAs with blank space and strip out leading and trailing whitespace
+         CRITCNT_min30 = nchar(EJCRIT_min30) - str_count(EJCRIT_min30, " "), # count the number of EJ criteria met
+         LOSEJ_min30 = CRITCNT_min30 == 0 & CRITCNT_min30 < CRITCNT2010, # blkgrps that change to not EJ from 2010 
+         EJCRIT_min50 = paste(ENGLISH, INCOME_medhhinc, MINORITY50, sep = " "), # identify EJ criteria met for 2010 modified
+         EJCRIT_min50 = str_trim(gsub("NA","",EJCRIT_min50)), # replace NAs with blank space and strip out leading and trailing whitespace
+         CRITCNT_min50 = nchar(EJCRIT_min50) - str_count(EJCRIT_min50, " "), # count the number of EJ criteria met
+         LOSEJ_min50 = CRITCNT_min50 == 0 & CRITCNT_min50 < CRITCNT2010, # blkgrps that change to not EJ from 2010 
+         ENGLISH_inc65= if_else(pctlimitenghh >= 25 & pctmedhhinc <= 65, "E", NULL), # English isolated AND  income criterion
+         ENGLISH_inc125= if_else(pctlimitenghh >= 25 & pctmedhhinc <= 125, "E", NULL), # English isolated AND < 125% med hh inc
+         MINORITY_inc125 = if_else(pctminority >= 25 & pctmedhhinc <= 125, "M", NULL), # minority AND < 125% med hh inc
+         MINORITY_inc150 = if_else(pctminority >= 25 & pctmedhhinc <= 150, "M", NULL), # minority AND < 150% med hh inc
+         MINORITY30_inc125 = if_else(pctminority >= 30 & pctmedhhinc <= 125, "M", NULL), # minority30 AND < 125% med hh inc
+         MINORITY30_inc150 = if_else(pctminority >= 30 & pctmedhhinc <= 150, "M", NULL), # minority30 AND < 150% med hh inc
+         EJCRIT_inc125 = paste(ENGLISH_inc125, INCOME_medhhinc, MINORITY_inc125, sep = " "),
+         EJCRIT_inc125 = str_trim(gsub("NA","",EJCRIT_inc125)),
+         CRITCNT_inc125 = nchar(EJCRIT_inc125) - str_count(EJCRIT_inc125, " "),
+         LOSEJ_inc125 = CRITCNT_inc125 == 0 & CRITCNT_inc125 < CRITCNT2010, # blkgrps that change to not EJ from 2010 policy
+         ENGLISH_inc125pctColl = if_else(pctlimitenghh >= 25 & pctmedhhinc <= 125 & pctCollege <= 50, "E", NULL), 
+         MINORITY_inc125pctColl = if_else(pctminority >= 25 & pctmedhhinc <= 125 & pctCollege <= 50, "M", NULL), 
+         EJCRIT_inc125pctColl = paste(ENGLISH_inc125pctColl, INCOME_medhhinc, MINORITY_inc125pctColl, sep = " "),
+         EJCRIT_inc125pctColl = str_trim(gsub("NA","",EJCRIT_inc125pctColl)),
+         CRITCNT_inc125pctColl = nchar(EJCRIT_inc125pctColl) - str_count(EJCRIT_inc125pctColl, " "),
+         LOSEJ_inc125pctColl = CRITCNT_inc125pctColl == 0 & CRITCNT_inc125pctColl < CRITCNT2010,
+         # Addendum 1 - Minority 25 and Income 125
+         EJCRIT_m25inc125 = paste(ENGLISH, INCOME_medhhinc, MINORITY_inc125, sep = " "),
+         EJCRIT_m25inc125 = str_trim(gsub("NA","",EJCRIT_m25inc125)),
+         CRITCNT_m25inc125 = nchar(EJCRIT_m25inc125) - str_count(EJCRIT_m25inc125, " "),
+         LOSEJ_m25inc125 = CRITCNT_m25inc125 == 0 & CRITCNT_m25inc125 < CRITCNT2010,
+         # Addendum 2 - Minority 30 and Income 125
+         EJCRIT_m30inc125 = paste(ENGLISH, INCOME_medhhinc, MINORITY30_inc125, sep = " "),
+         EJCRIT_m30inc125 = str_trim(gsub("NA","",EJCRIT_m30inc125)),
+         CRITCNT_m30inc125 = nchar(EJCRIT_m30inc125) - str_count(EJCRIT_m30inc125, " "),
+         LOSEJ_m30inc125 = CRITCNT_m30inc125 == 0 & CRITCNT_m30inc125 < CRITCNT2010,
+         # Addendum 3 - Minority 25 and Income 150
+         EJCRIT_m25inc150 = paste(ENGLISH, INCOME_medhhinc, MINORITY_inc150, sep = " "),
+         EJCRIT_m25inc150 = str_trim(gsub("NA","",EJCRIT_m25inc150)),
+         CRITCNT_m25inc150 = nchar(EJCRIT_m25inc150) - str_count(EJCRIT_m25inc150, " "),
+         LOSEJ_m25inc150 = CRITCNT_m25inc150 == 0 & CRITCNT_m25inc150 < CRITCNT2010,
+         # Addendum 4 - Minority 30 and Income 150
+         EJCRIT_m30inc150 = paste(ENGLISH, INCOME_medhhinc, MINORITY30_inc150, sep = " "),
+         EJCRIT_m30inc150 = str_trim(gsub("NA","",EJCRIT_m30inc150)),
+         CRITCNT_m30inc150 = nchar(EJCRIT_m30inc150) - str_count(EJCRIT_m30inc150, " "),
+         LOSEJ_m30inc150 = CRITCNT_m30inc150 == 0 & CRITCNT_m30inc150 < CRITCNT2010,
+         # Addendum 5 - Minority 40 or Minority 25 and Income 150
+         EJCRIT_m40_m25inc150 = paste(ENGLISH, INCOME_medhhinc, MINORITY40a, sep = " "),
+         EJCRIT_m40_m25inc150 = str_trim(gsub("NA","",EJCRIT_m40_m25inc150)),
+         CRITCNT_m40_m25inc150 = nchar(EJCRIT_m40_m25inc150) - str_count(EJCRIT_m40_m25inc150, " "),
+         LOSEJ_m40_m25inc150 = CRITCNT_m40_m25inc150 == 0 & CRITCNT_m40_m25inc150 < CRITCNT2010,
+         # Addendum 6 - Minority 40 or Minority 25 and MuniIncome 150
+         EJCRIT_m40_m25Muninc150 = paste(ENGLISH, INCOME_medhhinc, MINORITY40b, sep = " "),
+         EJCRIT_m40_m25Muninc150 = str_trim(gsub("NA","",EJCRIT_m40_m25Muninc150)),
+         CRITCNT_m40_m25Muninc150 = nchar(EJCRIT_m40_m25Muninc150) - str_count(EJCRIT_m40_m25Muninc150, " "),
+         LOSEJ_m40_m25Muninc150 = CRITCNT_m40_m25Muninc150 == 0 & CRITCNT_m40_m25Muninc150 < CRITCNT2010)
+
+# join data to spatial layer
+# blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>% 
+#   left_join(., maACS17_blkgrp, by = c("GEOID10" = "GEOID")) %>% 
+#   left_join(., maACS17_towns_inc, by = c("TOWN"))
+
+# remove redundant df
+rm(maACS17_blkgrp, maACS17_towns_inc)
+```
