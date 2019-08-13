@@ -1,16 +1,16 @@
 # Environmental Justice Alternative Policy F - Modify Minority30 Criterion by Income125
 
-This Addendum 2 option uses a threshold of 30% or higher for the minority criterion and also adds an income modifier to the minority criterion. Specifically, block groups qualify for environmental status by minority only if the median income of the block group does not exceed 125% of the statewide median (i.e. \$92,708.75). 
+This Environmental Justice Alternative Policy F option uses a threshold of 30% or higher for the minority criterion and also adds an income modifier to the minority criterion. Specifically, block groups qualify for environmental status by minority only if the median income of the block group does not exceed 125% of the statewide median (i.e. \$92,708.75). 
 
-Under this Addendum 2 policy alternative, environmental justice communities are defined as neighborhoods (U.S. Census Bureau census block groups) that meet *one or more* of the following criteria: 
+Under this Environmental Justice Alternative Policy F policy alternative, environmental justice communities are defined as neighborhoods (U.S. Census Bureau census block groups) that meet *one or more* of the following criteria: 
 
 * The median annual household income is at or below 65 percent of the statewide median income for Massachusetts; *or*
 * *30 percent or more of the residents are minority AND the median annual household income does not exceed 125 percent of the statewide median income for Massachusetts*; *or*
 * 25 percent or more of the residents are lacking English language proficiency.
 
-Compared to the benchmark 2010 environmental justice community criteria, the minority- and income-modified criteria of this alternative policy reduces the number of block groups qualifying as an environmental justice community by `r {sum(blkgrp_shp_WGS84$LOSEJ_m30inc125)}`, from `r {sum(blkgrp_shp_WGS84$CRITCNT2010 > 0)}` to `r {sum(blkgrp_shp_WGS84$CRITCNT_m30inc125 > 0)}` in total. Under this Environmental Justice Addendum 2 alternative policy, `r {round(sum(blkgrp_shp_WGS84$CRITCNT_m30inc125 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)}`% of Massachusetts block groups are classified as environmental justice communities. This classification can be visualized in Figure \@ref(fig:treemapAd2) below, which shows the percentage of block groups that fall into each category or combination of environmental justice criteria.
+Compared to the benchmark 2010 environmental justice community criteria, the minority- and income-modified criteria of this alternative policy reduces the number of block groups qualifying as an environmental justice community by `r {sum(blkgrp_shp_WGS84$LOSEJ_m30inc125)}`, from `r {sum(blkgrp_shp_WGS84$CRITCNT2010 > 0)}` to `r {sum(blkgrp_shp_WGS84$CRITCNT_m30inc125 > 0)}` in total. Under this Environmental Justice Environmental Justice Alternative Policy F alternative policy, `r {round(sum(blkgrp_shp_WGS84$CRITCNT_m30inc125 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)}`% of Massachusetts block groups are classified as environmental justice communities. This classification can be visualized in Figure \@ref(fig:treemapAltF) below, which shows the percentage of block groups that fall into each category or combination of environmental justice criteria.
 
-```{r treemapAd2, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.cap="Tree map of block groups classified as environmental justice by Addendum 2 Policy Alternative - Modify Minority30 Criteria by Income125."}
+```{r treemapAltF, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.cap="Tree map of block groups classified as environmental justice by Environmental Justice Alternative Policy F - Modify Minority30 Criteria by Income125."}
 # Create a tree map instead with treemapify
 # library(treemapify)
 # First, you need to generate a summary df with one value per observation or EJ criterion
@@ -29,15 +29,15 @@ blkgrp_shp_WGS84 %>%
   ggplot(aes(area = percent, fill=EJCRIT_m30inc125, label = paste(EJCRIT_m30inc125,paste(round(percent,1),"%"),sep="\n"))) + 
   scale_fill_manual(name = "Environmental Justice Criteria", 
                     values = c("lightskyblue","lawngreen","cyan","gold","deeppink","darkgreen","navyblue","gray88")) +
-  labs(title = "Massachusetts Census Blockgroups Meeting Addendum 2 Alternative EJ Policy Criteria",
-       caption = "Based on Addendum 2 Alternative EJ Policy and ACS 5yr 2017 Blockgroup Estimates") +
+  labs(title = "Massachusetts Census Blockgroups Meeting Environmental Justice Alternative Policy F Criteria",
+       caption = "Based on ACS 5yr 2017 Blockgroup Estimates") +
   geom_treemap() + 
   geom_treemap_text(color = "white", place = "centre", grow = TRUE)
 ```
 
-These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool (white box in upper left of map) and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. Click on the layer button (white box in the upper right of the map) and activate the Lost EJ Ad2 Policy layer in the map to see the block groups that are delisted (i.e. "Lost") as environmental justice communities under Poliicy Addendum 2, shown as light red or salmon colored polygons. 
+These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool (white box in upper left of map) and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. Click on the layer button (white box in the upper right of the map) and activate the Lost EJ Policy F layer in the map to see the block groups that are delisted (i.e. "Lost") as environmental justice communities under Poliicy Environmental Justice Alternative Policy F, shown as light red or salmon colored polygons. 
 
-```{r mapAd2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Map of block groups classified as environmental justice by Addendum 2 Alternative Environmental Justice Policy."}
+```{r mapAltF, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Map of block groups classified as environmental justice by Environmental Justice Alternative Policy F."}
 # How many lost EJ blockgroups occur within blue communities?
 lostm30125 <- blkgrp_shp_WGS84 %>% 
   as.data.frame() %>% 
@@ -52,13 +52,13 @@ blkgrp_shp_WGS84_naEJCRIT_m30inc125 <- blkgrp_shp_WGS84 %>%
   filter(EJCRIT_m30inc125 !="")
 
 # create a polygon layer of blockgroups that are dropped out of EJ status by criteria change
-policyAd2polygons <- blkgrp_shp_WGS84 %>% 
+policyFpolygons <- blkgrp_shp_WGS84 %>% 
   filter(LOSEJ_m30inc125 == TRUE) %>% 
   select(TOWN)
   
 
 # Create popup. NOTE THAT POPUP AND PALETTE MUST BE CREATED FROM EXACT SAME DF AS USED IN leaflet() MAP. OTHERWISE, POPUPS WILL SHOW UP IN THE WRONG LOCATION!
-EJAd2PopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT_m30inc125$NAME, "<br/>",
+EJFPopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT_m30inc125$NAME, "<br/>",
                    "<b>Town:</b> ", blkgrp_shp_WGS84_naEJCRIT_m30inc125$TOWN, "<br/>",
                    "<b>Ad2 Policy EJ Criteria Met:</b> ", blkgrp_shp_WGS84_naEJCRIT_m30inc125$EJCRIT_m30inc125, "<br/>",
                    "<b>ACS 5yr 2017</b> ", "<br/>",
@@ -66,7 +66,7 @@ EJAd2PopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT_m30inc125$NAME, "<br/>",
                    "<b>Median Household Income: </b>", paste0("$",round(blkgrp_shp_WGS84_naEJCRIT_m30inc125$medhhincE)),"<br/>",
                    "<b>% Limited English Households: </b>", round(blkgrp_shp_WGS84_naEJCRIT_m30inc125$pctlimitenghh,1))
 
-# draw the map of EJ Polygons according to Addendum 2 EJ Policy. Faded red/salmong colored polygons represent blockgroups that lose EJ status when the income criteria modifies minority and English isolation. 
+# draw the map of EJ Polygons according to Environmental Justice Alternative Policy F EJ Policy. Faded red/salmong colored polygons represent blockgroups that lose EJ status when the income criteria modifies minority and English isolation. 
 leaflet() %>% 
   addProviderTiles(providers$Stamen.TonerLite) %>% 
   addPolygons(data = town_shp_WGS84,
@@ -83,7 +83,7 @@ leaflet() %>%
               fillColor = "blue",
               label = ~TOWN,popup = TownMedIncPopUp,
               group = "Top 20% Median Household Income") %>% 
-  addPolygons(data = policyAd2polygons,
+  addPolygons(data = policyFpolygons,
               fillColor = "red",
               weight = 1,
               opacity = 1,
@@ -91,8 +91,8 @@ leaflet() %>%
               dashArray = 3,
               fillOpacity = 0.3,
               label=~TOWN,
-              popup = "Lost EJ Under Addendum 2 Policy",
-              group = "Lost EJ Policy Ad2") %>% 
+              popup = "Lost EJ Under Policy F",
+              group = "Lost EJ Policy F") %>% 
   addPolygons(data = blkgrp_shp_WGS84_naEJCRIT_m30inc125,
               fillColor = ~EJ2010pal(EJCRIT_m30inc125), 
               weight = 0.5,
@@ -101,7 +101,7 @@ leaflet() %>%
               dashArray = 3,
               fillOpacity = 0.7,
               label=~TOWN, 
-              popup = EJAd2PopUp,
+              popup = EJFPopUp,
               highlight = highlightOptions(
                 weight = 5,
                 color = "#666",
@@ -116,10 +116,10 @@ leaflet() %>%
   addSearchFeatures(targetGroups  = 'muni', 
                     options = searchFeaturesOptions(zoom=14, openPopup=TRUE, hideMarkerOnCollapse=T)) %>% 
   addLayersControl(
-    overlayGroups = c("Lost EJ Policy Ad2","Top 20% Median Household Income"),
+    overlayGroups = c("Lost EJ Policy F","Top 20% Median Household Income"),
     options = layersControlOptions(collapsed = TRUE)
   ) %>% 
-  hideGroup(c("Top 20% Median Household Income", "Lost EJ Policy Ad2"))
+  hideGroup(c("Top 20% Median Household Income", "Lost EJ Policy F"))
 ```
 
-Another way to evaluate the impact of Addendum 2 Policy is to look at how many "lost" environmental justice classifications occur within wealthier municipalities. Under Addendum 2 Policy, `r {sum(lostm30125$lost)}` (`r {round(sum(lostm30125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m30inc125) * 100,1)}`%) of the `r {sum(blkgrp_shp_WGS84$LOSEJ_m30inc125)}` lost environmental justice classifications occur in these highest income municipalities. The latter addresses the issue of environmental justice designations that occur in communities not typically associated with environmental injustices. Activate the Top 20% Median Household Income layer in the map to see the municipalities in the top fifth of median household incomes (i.e. median household incomes ranging from \$105,169 to \$204,018), which are shaded in blue. 
+Another way to evaluate the impact of Environmental Justice Alternative Policy F is to look at how many "lost" environmental justice classifications occur within wealthier municipalities. Under Environmental Justice Alternative Policy F, `r {sum(lostm30125$lost)}` (`r {round(sum(lostm30125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m30inc125) * 100,1)}`%) of the `r {sum(blkgrp_shp_WGS84$LOSEJ_m30inc125)}` lost environmental justice classifications occur in these highest income municipalities. The latter addresses the issue of environmental justice designations that occur in communities not typically associated with environmental injustices. Activate the Top 20% Median Household Income layer in the map to see the municipalities in the top fifth of median household incomes (i.e. median household incomes ranging from \$105,169 to \$204,018), which are shaded in blue. 
