@@ -60,7 +60,7 @@ policyEpolygons <- blkgrp_shp_WGS84 %>%
 # Create popup. NOTE THAT POPUP AND PALETTE MUST BE CREATED FROM EXACT SAME DF AS USED IN leaflet() MAP. OTHERWISE, POPUPS WILL SHOW UP IN THE WRONG LOCATION!
 EJEPopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT_m25inc125$NAME, "<br/>",
                    "<b>Town:</b> ", blkgrp_shp_WGS84_naEJCRIT_m25inc125$TOWN, "<br/>",
-                   "<b>Ad1 Policy EJ Criteria Met:</b> ", blkgrp_shp_WGS84_naEJCRIT_m25inc125$EJCRIT_m25inc125, "<br/>",
+                   "<b>Policy E EJ Criteria Met:</b> ", blkgrp_shp_WGS84_naEJCRIT_m25inc125$EJCRIT_m25inc125, "<br/>",
                    "<b>ACS 5yr 2017</b> ", "<br/>",
                    "<b>% Minority: </b>", round(blkgrp_shp_WGS84_naEJCRIT_m25inc125$pctminority,1),"<br/>",
                    "<b>Median Household Income: </b>", paste0("$",round(blkgrp_shp_WGS84_naEJCRIT_m25inc125$medhhincE)),"<br/>",
