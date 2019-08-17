@@ -35,7 +35,7 @@ blkgrp_shp_WGS84 %>%
   geom_treemap_text(color = "white", place = "centre", grow = TRUE)
 ```
 
-These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool (white box in upper left of map) and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. Click on the layers button (white box in the upper right of the map) and activate the Lost EJ Policy B layer in the map to see the block groups that are delisted (i.e. "Lost") as environmental justice communities under Poliicy B, shown as light red or salmon colored polygons. 
+These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool (white box in upper left of map) and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. Click on the layers button (white box in the upper right of the map) and activate the Lost EJ Policy B layer in the map to see the block groups that are delisted (i.e. "Lost") as environmental justice communities under Policy B, shown as light red or salmon colored polygons. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Map of block groups classified as environmental justice by Alternative Environmental Justice Policy B."}
 # How many lost EJ blockgroups occur within blue communities?
@@ -50,6 +50,14 @@ lost50 <- blkgrp_shp_WGS84 %>%
 blkgrp_shp_WGS84_naEJCRIT_min50 <- blkgrp_shp_WGS84 %>%
   select(NAME,TOWN,EJCRIT_min50,pctminority,medhhincE,pctlimitenghh) %>% 
   filter(EJCRIT_min50 !="")
+
+# How many EJ blockgroups still within blue communities?
+inside50 <- blkgrp_shp_WGS84_naEJCRIT_min50 %>% 
+  as.data.frame() %>% 
+  group_by(TOWN) %>% 
+  summarize(inside = n()) %>% 
+  left_join(macosub_shp_WGS84,.,by=c("TOWN" = "TOWN")) %>% 
+  na.omit()
 
 # create a polygon layer of blockgroups that are dropped out of EJ status by criteria change
 policyBpolygons <- blkgrp_shp_WGS84 %>% 
@@ -122,4 +130,4 @@ leaflet() %>%
   hideGroup(c("Top 20% Median Household Income", "Lost EJ Policy B"))
 ```
 
-Under this proposal, block groups within I-495, especially the inner communities around Boston see the largest loss of EJ status. Another way to evaluate the impact of Policy B is to look at how many "lost" environmental justice classifications occur within wealthier municipalities. Under Policy B, `r {sum(lost50$lost)}` (`r {round(sum(lost50$lost) / sum(blkgrp_shp_WGS84$LOSEJ_min50) * 100,1)}`%) of the `r {sum(blkgrp_shp_WGS84$LOSEJ_min50)}` lost environmental justice classifications occur in these highest income municipalities. The latter addresses the issue of environmental justice designations that occur in communities not typically associated with environemntal injustices. Activate the Top 20% Median Household Income layer in the map to see the municipalities in the top fifth of median household incomes (i.e. median household incomes ranging from \$105,169 to \$204,018), which are shaded in blue. 
+Under this proposal, block groups within I-495, especially the inner communities around Boston see the largest loss of EJ status. Another way to evaluate the impact of Policy B is to look at how many "lost" environmental justice classifications occur within wealthier municipalities. Under Policy B, `r {sum(lost50$lost)}` (`r {round(sum(lost50$lost) / sum(blkgrp_shp_WGS84$LOSEJ_min50) * 100,1)}`%) of the `r {sum(blkgrp_shp_WGS84$LOSEJ_min50)}` lost environmental justice classifications occur in these highest income municipalities. Conversely, `r {sum(inside50$inside)}` (`r {round(sum(inside50$inside)/sum(blkgrp_shp_WGS84$CRITCNT_min50 > 0),3)*100}`%) of environmental justice block groups remain within these highest income municipalities. The latter addresses the issue of environmental justice designations that occur in communities not typically associated with environmental injustices. Activate the Top 20% Median Household Income layer in the map to see the municipalities in the top fifth of median household incomes (i.e. median household incomes ranging from \$105,169 to \$204,018), which are shaded in blue. 
