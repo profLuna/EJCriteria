@@ -46,7 +46,7 @@ lostm40_m25Muninc150 <- blkgrp_shp_WGS84 %>%
   summarize(lost = sum(LOSEJ_m40_m25Muninc150)) %>% 
   left_join(macosub_shp_WGS84,.,by=c("TOWN" = "TOWN"))
 
-# Create map of Addendum 5 Alternative EJ Policy polygons across state
+# Create map of EJ Policy J polygons across state
 # create df without "" in EJCRIT2010 for setting up color palette
 blkgrp_shp_WGS84_naEJCRIT_m40_m25Muninc150 <- blkgrp_shp_WGS84 %>%
   select(NAME,TOWN,EJCRIT_m40_m25Muninc150,pctminority,medhhincE,pctlimitenghh) %>% 
