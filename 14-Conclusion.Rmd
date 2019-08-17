@@ -2,63 +2,75 @@
 
 This analysis evaluated alternative environmental justice community criteria, comparing them to the benchmark environmental justice criteria used by Massachusetts between 2010 - 2016. The evaluations considered increasing the Minority criterion from 25% to 30% and 50%, and also adding modifiers to the existing criteria, such that no community can be classified as an environmental justice community if its income exceeds 125% of the statewide median household income, or if the adult population with a college degree exceeds 50%.  Geographically, adding more stringent criteria results in "lost" environmental justice classifications primarily in the eastern third of the state, and primarily within the I-495 belt. In order to compare these policy implications, the number and proportion of lost environmental justice classifications were considered with regard to whether or not they occurred within the wealthiest fifth of municipalities. These results are summarized in the table below.
 
-```{r conclusion, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Table 1. Environmental Justice Policy Criteria Statistics."}
+```{r conclusion, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Table 1. Environmental Justice Policy Criteria Compared"}
 library(kableExtra)
 
 # Store summary variables to put in summary table
 # 2010 EJ Policy
 EJ2010pct <- round(sum(blkgrp_shp_WGS84$CRITCNT2010 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
+# 2017 EJ Policy
 EJ2017pct <- round(sum(blkgrp_shp_WGS84$CRITCNT > 0) / nrow(blkgrp_shp_WGS84) * 100,0)
 # Alternative Policy A
 EJAltAlost <- sum(blkgrp_shp_WGS84$LOSEJ_min30)
 EJAltApct <- round(sum(blkgrp_shp_WGS84$CRITCNT_min30 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltAlostW <- sum(lost30$lost)
-# EJAltAlostWpct <- round(sum(lost30$lost) / sum(blkgrp_shp_WGS84$LOSEJ_min30) * 100,1)
+# EJAltAlostW <- sum(lost30$lost)
+# EJAltAinside <- sum(inside30$inside)
+EJAltAinsidePct <- round(sum(inside30$inside)/sum(blkgrp_shp_WGS84$CRITCNT_min30 > 0)*100,1)
+EJAltAlostWpct <- round(sum(lost30$lost) / sum(blkgrp_shp_WGS84$LOSEJ_min30) * 100,1)
 # Alternative Policy B
 EJAltBlost <- sum(blkgrp_shp_WGS84$LOSEJ_min50)
 EJAltBpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_min50 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltBlostW <- sum(lost50$lost)
-# EJAltBlostWpct <- round(sum(lost50$lost) / sum(blkgrp_shp_WGS84$LOSEJ_min50) * 100,1)
+# EJAltBlostW <- sum(lost50$lost)
+EJAltBinsidePct <- round(sum(inside50$inside)/sum(blkgrp_shp_WGS84$CRITCNT_min50 > 0) * 100,1)
+EJAltBlostWpct <- round(sum(lost50$lost) / sum(blkgrp_shp_WGS84$LOSEJ_min50) * 100,1)
 # Alternative Policy C
 EJAltClost <- sum(blkgrp_shp_WGS84$LOSEJ_inc125)
 EJAltCpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_inc125 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltClostW <- sum(lost125$lost)
-# EJAltClostWpct <- round(sum(lost125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_inc125) * 100,1)
+# EJAltClostW <- sum(lost125$lost)
+EJAltCinsidePct <- round(sum(inside125$inside)/sum(blkgrp_shp_WGS84$CRITCNT_inc125 > 0) * 100,1)
+EJAltClostWpct <- round(sum(lost125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_inc125) * 100,1)
 # Alternative Policy D
 EJAltDlost <- sum(blkgrp_shp_WGS84$LOSEJ_inc125pctColl)
 EJAltDpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_inc125pctColl > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltDlostW <- sum(lost125_50$lost)
-# EJAltDlostWpct <- round(sum(lost125_50$lost) / sum(blkgrp_shp_WGS84$LOSEJ_inc125pctColl) * 100,1)
+# EJAltDlostW <- sum(lost125_50$lost)
+EJAltDinsidePct <- round(sum(inside125_50$inside)/sum(blkgrp_shp_WGS84$CRITCNT_inc125pctColl > 0) * 100,1)
+EJAltDlostWpct <- round(sum(lost125_50$lost) / sum(blkgrp_shp_WGS84$LOSEJ_inc125pctColl) * 100,1)
 # Alternative Policy E
 EJAltElost <- sum(blkgrp_shp_WGS84$LOSEJ_m25inc125)
 EJAltEpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_m25inc125 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltElostW <- sum(lostm25125$lost)
-# EJAltElostWpct <- round(sum(lostm25125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m25inc125) * 100,1)
+# EJAltElostW <- sum(lostm25125$lost)
+EJAltEinsidePct <- round(sum(insidem25125$inside)/sum(blkgrp_shp_WGS84$CRITCNT_m25inc125 > 0) * 100,1)
+EJAltElostWpct <- round(sum(lostm25125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m25inc125) * 100,1)
 # Alternative Policy F
 EJAltFlost <- sum(blkgrp_shp_WGS84$LOSEJ_m30inc125)
 EJAltFpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_m30inc125 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltFlostW <- sum(lostm30125$lost)
-# EJAltFlostWpct <- round(sum(lostm30125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m30inc125) * 100,1)
+# EJAltFlostW <- sum(lostm30125$lost)
+EJAltFinsidePct <- round(sum(insidem30125$inside)/sum(blkgrp_shp_WGS84$CRITCNT_m30inc125 > 0) * 100,1)
+EJAltFlostWpct <- round(sum(lostm30125$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m30inc125) * 100,1)
 # Alternative Policy G
 EJAltGlost <- sum(blkgrp_shp_WGS84$LOSEJ_m25inc150)
 EJAltGpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_m25inc150 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltGlostW <- sum(lostm25150$lost)
-# EJAltGlostWpct <- round(sum(lostm25150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m25inc150) * 100,1)
+# EJAltGlostW <- sum(lostm25150$lost)
+EJAltGinsidePct <- round(sum(insidem25150$inside)/sum(blkgrp_shp_WGS84$CRITCNT_m25inc150 > 0) * 100,1)
+EJAltGlostWpct <- round(sum(lostm25150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m25inc150) * 100,1)
 # Alternative Policy H
 EJAltHlost <- sum(blkgrp_shp_WGS84$LOSEJ_m30inc150)
 EJAltHpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_m30inc150 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltHlostW <- sum(lostm30150$lost)
-# EJAltHlostWpct <- round(sum(lostm30150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m30inc150) * 100,1)
+# EJAltHlostW <- sum(lostm30150$lost)
+EJAltHinsidePct <- round(sum(insidem30150$inside)/sum(blkgrp_shp_WGS84$CRITCNT_m30inc150 > 0)*100,1)
+EJAltHlostWpct <- round(sum(lostm30150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m30inc150) * 100,1)
 # Alternative Policy I
 EJAltIlost <- sum(blkgrp_shp_WGS84$LOSEJ_m40_m25inc150)
 EJAltIpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_m40_m25inc150 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltIlostW <- sum(lostm40_m25inc150$lost)
-# EJAltIlostWpct <- round(sum(lostm40_m25inc150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m40_m25inc150) * 100,1)
+# EJAltIlostW <- sum(lostm40_m25inc150$lost)
+EJAltIinsidePct <- round(sum(insidem40_m25inc150$inside)/sum(blkgrp_shp_WGS84$CRITCNT_m40_m25inc150 > 0) * 100,1)
+EJAltIlostWpct <- round(sum(lostm40_m25inc150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m40_m25inc150) * 100,1)
 # Alternative Policy J
 EJAltJlost <- sum(blkgrp_shp_WGS84$LOSEJ_m40_m25Muninc150)
 EJAltJpct <- round(sum(blkgrp_shp_WGS84$CRITCNT_m40_m25Muninc150 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
-EJAltJlostW <- sum(lostm40_m25Muninc150$lost)
-# EJAltJlostWpct <- round(sum(lostm40_m25Muninc150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m40_m25Muninc150) * 100,1)
+# EJAltJlostW <- sum(lostm40_m25Muninc150$lost)
+EJAltJinsidePct <- round(sum(insidem40_m25Muninc150$inside)/sum(blkgrp_shp_WGS84$CRITCNT_m40_m25Muninc150 > 0) * 100,1)
+EJAltJlostWpct <- round(sum(lostm40_m25Muninc150$lost) / sum(blkgrp_shp_WGS84$LOSEJ_m40_m25Muninc150) * 100,1)
 
 # Create vectors for table variables and contents
 Policy <- c("2010-16","2017","Alt A","Alt B","Alt C","Alt D", "Alt E", "Alt F", "Alt G", "Alt H", "Alt I", "Alt J")
@@ -71,20 +83,21 @@ Change <- c("None","None",
             "Minority >= 30% & Income <= 125%",
             "Minority >= 25% & Income <= 150",
             "Minority >= 30% & Income <= 150",
-            "Minority >= 40% OR Minority >= 25% & Income <= 150%",
-            "Minority >= 40% OR Minority >= 25% & MuniIncome <= 150%")
+            "Minority >= 40% OR (Minority >= 25% & Income <= 150%)",
+            "Minority >= 40% OR (Minority >= 25% & MuniIncome <= 150%)")
 PctEJPop <- c(EJ2010pct,EJ2017pct,EJAltApct,EJAltBpct,EJAltCpct,EJAltDpct,EJAltEpct,EJAltFpct,EJAltGpct,EJAltHpct,EJAltIpct,EJAltJpct)
 LostEJ <- c(NA,NA,EJAltAlost,EJAltBlost,EJAltClost,EJAltDlost,EJAltElost,EJAltFlost,EJAltGlost,EJAltHlost,EJAltIlost,EJAltJlost)
-LostWealthy <- c(NA,NA,EJAltAlostW,EJAltBlostW,EJAltClostW,EJAltDlostW,EJAltElostW,EJAltFlostW,EJAltGlostW,EJAltHlostW,EJAltIlostW,EJAltJlostW)
+# LostWealthy <- c(NA,NA,EJAltAlostW,EJAltBlostW,EJAltClostW,EJAltDlostW,EJAltElostW,EJAltFlostW,EJAltGlostW,EJAltHlostW,EJAltIlostW,EJAltJlostW)
+LostWealthyPct <- c(NA,NA,EJAltAlostWpct,EJAltBlostWpct,EJAltClostWpct,EJAltDlostWpct,EJAltElostWpct,EJAltFlostWpct,EJAltGlostWpct,EJAltHlostWpct, EJAltIlostWpct,EJAltJlostWpct)
+InWealthyPct <- c(NA,NA,EJAltAinsidePct,EJAltBinsidePct,EJAltCinsidePct,EJAltDinsidePct,EJAltEinsidePct,EJAltFinsidePct,EJAltGinsidePct,EJAltHinsidePct,EJAltIinsidePct,EJAltJinsidePct)
 
 # Assemble the table
-finalResults <- data.frame(Policy,Change,PctEJPop,LostEJ,LostWealthy) %>% 
-  mutate(PctLostWealthy = round(LostWealthy/LostEJ*100,1))
+finalResults <- data.frame(Policy,Change,PctEJPop,LostEJ,LostWealthyPct,InWealthyPct)
 
 # Display the table
-kable(finalResults, col.names = c("Policy", "Change", "EJ Pop %", "Lost EJ", "Lost Wealthy", "Lost Wealthy %")) %>% 
+kable(finalResults, col.names = c("Policy", "Change", "EJ Pop %", "EJ Lost", "Lost Wealthy %", "In Wealthy %")) %>% 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>% 
-  column_spec(2, width = "30em", background = "yellow")
+  column_spec(2, width = "30em")
 ```
 
 Alternative Policy B results in the greatest number of total lost environmental justice classifications, but it is relatively inefficient becuase only a small percentage of these lost EJ classifications are removed from the wealthiest communities. By contrast, Alternative Policy D results in the greatest number of lost environmental justice classifications in the wealthiest communities. However, Alternative Policy C is arguably the most efficient option because it shows the greatest percentage of lost environmental justice classifications from wealthy communities, while losing only sightly less in total than Policy D. 
