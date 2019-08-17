@@ -33,7 +33,7 @@ blkgrp_shp_WGS84 %>%
   geom_treemap_text(color = "white", place = "centre", grow = TRUE)
 ```
 
-These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool (whtie box in upper left of map) and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. 
+These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool (white box in upper left of map) and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. 
 
 ```{r map2010, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Map of block groups classified as environmental justice by 2010-2016 policy."}
 # Create map of 2010 EJ policy polygons across state
