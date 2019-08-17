@@ -34,7 +34,7 @@ blkgrp_shp_WGS84 %>%
   geom_treemap_text(color = "white", place = "centre", grow = TRUE)
 ```
 
-These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. Note how the Income criterion for the 2017 EJ policy captures nearly all of western Massachusetts. Certainly it reveals a significant difference incoome between western and eastern Massachusetts, but it is not clear if this was the intended outcome for environmental justice designations. 
+These classifications can be visualized and explored geographically in the interactive map below. Click on the search tool and type in a town or city name to zoom to that municipality. Click on individual block groups to see more detailed demographics. Note how the Income criterion for the 2017 EJ policy captures nearly all of western Massachusetts. Certainly, it reveals a significant difference income between western and eastern Massachusetts, but it is not clear if this was the intended outcome for environmental justice designations. 
 
 ```{r map2017, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Map of block groups classified as environmental justice by 2017 policy."}
 # draw the map of EJ Polygons according to 2017 policy
