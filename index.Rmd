@@ -1,6 +1,6 @@
 --- 
-title: "Evaluation of Environmental Justice Criteria"
-author: "Marcos Luna, PhD, Professor of Geography, Salem State University"
+title: "Evaluation of Massachusetts Environmental Justice Criteria"
+author: "Marcos Luna, PhD, Professor of Geography and Sustainability, Salem State University"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
 documentclass: book
