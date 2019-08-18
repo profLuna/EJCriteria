@@ -1,1 +1,3 @@
-This is a minimal example of a book based on R Markdown and **bookdown** (https://github.com/rstudio/bookdown). Please see the page "Get Started" at https://bookdown.org/ for how to compile this example.
+# Evaluation of Environmental Justice Criteria
+
+This is the source R code for the online report "Evaluation of Environmental Justice Criteria(http://w3.salemstate.edu/~mluna/EJ_Criteria_Analysis/)." The report evaluates 10 alternative environmental justice criteria for Massachusetts. 
