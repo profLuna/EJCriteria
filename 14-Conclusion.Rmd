@@ -5,11 +5,13 @@ This analysis evaluated alternative environmental justice community criteria, co
 ```{r conclusion, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Table 1. Environmental Justice Policy Criteria Compared"}
 library(kableExtra)
 
-# Store summary variables to put in summary table
+# Calculate summary vectors to put in summary table
 # 2010 EJ Policy
 EJ2010pct <- round(sum(blkgrp_shp_WGS84$CRITCNT2010 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
+EJ2010insidePct <- round(sum(inside2010$inside)/sum(blkgrp_shp_WGS84$CRITCNT2010 > 0)*100,1)
 # 2017 EJ Policy
 EJ2017pct <- round(sum(blkgrp_shp_WGS84$CRITCNT > 0) / nrow(blkgrp_shp_WGS84) * 100,0)
+EJ2017insidePct <- round(sum(inside2017$inside)/sum(blkgrp_shp_WGS84$CRITCNT > 0)*100,1)
 # Alternative Policy A
 EJAltAlost <- sum(blkgrp_shp_WGS84$LOSEJ_min30)
 EJAltApct <- round(sum(blkgrp_shp_WGS84$CRITCNT_min30 > 0) / nrow(blkgrp_shp_WGS84) * 100,1)
@@ -89,7 +91,7 @@ PctEJPop <- c(EJ2010pct,EJ2017pct,EJAltApct,EJAltBpct,EJAltCpct,EJAltDpct,EJAltE
 LostEJ <- c(NA,NA,EJAltAlost,EJAltBlost,EJAltClost,EJAltDlost,EJAltElost,EJAltFlost,EJAltGlost,EJAltHlost,EJAltIlost,EJAltJlost)
 # LostWealthy <- c(NA,NA,EJAltAlostW,EJAltBlostW,EJAltClostW,EJAltDlostW,EJAltElostW,EJAltFlostW,EJAltGlostW,EJAltHlostW,EJAltIlostW,EJAltJlostW)
 LostWealthyPct <- c(NA,NA,EJAltAlostWpct,EJAltBlostWpct,EJAltClostWpct,EJAltDlostWpct,EJAltElostWpct,EJAltFlostWpct,EJAltGlostWpct,EJAltHlostWpct, EJAltIlostWpct,EJAltJlostWpct)
-InWealthyPct <- c(NA,NA,EJAltAinsidePct,EJAltBinsidePct,EJAltCinsidePct,EJAltDinsidePct,EJAltEinsidePct,EJAltFinsidePct,EJAltGinsidePct,EJAltHinsidePct,EJAltIinsidePct,EJAltJinsidePct)
+InWealthyPct <- c(EJ2010insidePct,EJ2017insidePct,EJAltAinsidePct,EJAltBinsidePct,EJAltCinsidePct,EJAltDinsidePct,EJAltEinsidePct,EJAltFinsidePct,EJAltGinsidePct,EJAltHinsidePct,EJAltIinsidePct,EJAltJinsidePct)
 
 # Assemble the table
 finalResults <- data.frame(Policy,Change,PctEJPop,LostEJ,LostWealthyPct,InWealthyPct)
@@ -100,6 +102,8 @@ kable(finalResults, col.names = c("Policy", "Change", "EJ Pop %", "EJ Lost", "Lo
   column_spec(2, width = "30em")
 ```
 
-Alternative Policy B results in the greatest reduction in the number of environmental justice classifications ("EJ Lost") relative to the 2010 base comparison policy, but Alternative Policy B is also relatively inefficient because only a small percentage of these lost EJ classifications come from the wealthiest communities. By contrast, Alternative Policy J results in the fewest number of total lost environmental justice classifications relative to the 2010 base comparison policy, and 100% of these lost environmental justice classifications come from the wealthiest communities; the most efficient alternative. 
+All of the policy alternatives considered in this analysis result in a reduction in the number and percentage of Census block groups in Massachusetts that are classified as environmental justice communities relative to the 2010-16 Environmental Justice policy (see "EJ Pop %" column in table above). Moreover, in all cases, at least one-fifth of the "lost" environmental justice classifications come from the wealthiest municipalities; those in the top quintile of median household income (see "Lost Wealthy %" column in table above), which results in a reduction in the percentage of environmental justice classified block groups that are within those wealthy communities (see "In Wealthy %" column in table above). The latter address the issue of environmental justice designations that occur in communities not typically associated with environmental injustices. However, there are significant differences in the impacts and efficiency of these alternatives. 
 
-Policy J offers the most "efficient" implications, removing only those environmental justice designations which occur in wealthy communities where one would not expect to find environmental justice issues, while maintaing a relatively low residual percentage of environmental justice designations that continue to persist in those same communities. 
+Alternative Policy B results in the greatest reduction in the number of environmental justice classifications ("EJ Lost") relative to the 2010 base comparison policy, but Alternative Policy B is relatively inefficient because only a small percentage of these lost EJ classifications - 19.9% - come from the wealthiest communities. This means that 80% of the lost environmental justice classifications come from less wealthy municipalities, which carries the risk that some communities are likely inappropriately declassified. By contrast, Alternative Policy J results in the fewest number of total lost environmental justice classifications relative to the 2010 base comparison policy, and 100% of these lost environmental justice classifications come from the wealthiest communities; the most efficient alternative. 
+
+Policy J offers the most "efficient" implications, removing only those environmental justice designations which occur in wealthy communities where one would not expect to find environmental justice issues, while maintaining a relatively low residual percentage of environmental justice designations that continue to persist in those same communities. Overall, Environmental Justice Policy J achieves the objective of reducing inappropriately classified block groups as environmental justice communities while avoiding the inappropriate declassification of deserving environmental justice communities.  
