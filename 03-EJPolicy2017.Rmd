@@ -42,6 +42,15 @@ These classifications can be visualized and explored geographically in the inter
 blkgrp_shp_WGS84_naEJCRIT <- blkgrp_shp_WGS84 %>%
   select(NAME,TOWN,EJCRIT,pctminority,medhhincE,pctmedhhinc_lt50,pctlimitenghh) %>% 
   filter(EJCRIT !="")
+
+# How many EJ blockgroups within top quintile communities?
+inside2017 <- blkgrp_shp_WGS84_naEJCRIT %>% 
+  as.data.frame() %>% 
+  group_by(TOWN) %>% 
+  summarize(inside = n()) %>% 
+  left_join(macosub_shp_WGS84,.,by=c("TOWN" = "TOWN")) %>% 
+  na.omit()
+
 # set up color palette with colors in order of criteria, which are in alphabetical order by default
 # sort(unique(blkgrp_shp_WGS84_naEJCRIT2010$EJCRIT)) # confirm order of criteria
 EJ2017pal <- colorFactor(palette = c("deeppink","cyan","navyblue","lawngreen","darkgreen","gold"), 
