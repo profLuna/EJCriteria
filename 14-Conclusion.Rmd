@@ -99,7 +99,7 @@ finalResults <- data.frame(Policy,Change,PctEJPop,LostEJ,LostWealthyPct,InWealth
 # Display the table
 kable(finalResults, col.names = c("Policy", "Change", "EJ Pop %", "EJ Lost", "Lost Wealthy %", "In Wealthy %")) %>% 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>% 
-  column_spec(2, width = "30em")
+  column_spec(2, width = "20em")
 ```
 
 All of the policy alternatives considered in this analysis result in a reduction in the number and percentage of Census block groups in Massachusetts that are classified as environmental justice communities relative to the 2010-16 Environmental Justice policy (see "EJ Pop %" column in table above). Moreover, in all cases, at least one-fifth of the "lost" environmental justice classifications come from the wealthiest municipalities; those in the top quintile of median household income (see "Lost Wealthy %" column in table above), which results in a reduction in the percentage of environmental justice classified block groups that are within those wealthy communities (see "In Wealthy %" column in table above). The latter address the issue of environmental justice designations that occur in communities not typically associated with environmental injustices. However, there are significant differences in the impacts and efficiency of these alternatives. 
