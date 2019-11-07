@@ -30,7 +30,7 @@ blkgrp_shp_WGS84 %>%
   scale_fill_manual(name = "Environmental Justice Criteria", 
                     values = c("lightskyblue","lawngreen","cyan","gold","deeppink","darkgreen","navyblue","gray88")) +
   labs(title = "Massachusetts Census Blockgroups Meeting Alternative EJ Policy A Criteria",
-       caption = "Based on Alternative EJ Policy A and ACS 5yr 2017 Blockgroup Estimates") +
+       caption = "Based on ACS 5yr 2017 Blockgroup Estimates") +
   geom_treemap() + 
   geom_treemap_text(color = "white", place = "centre", grow = TRUE)
 ```
