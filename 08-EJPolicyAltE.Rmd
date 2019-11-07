@@ -1,6 +1,6 @@
 # Environmental Justice Alternative Policy E - Modify Minority25 Criterion by Income125
 
-This Alternative Environmental Justice Policy E option adds a modifier to the minority criterion. Specifically, block groups qualify for environmental status by minority only if the median income of the block group does not exceed 125% of the statewide median. This means that, regardless of criteria, the median income cannot exceed \$92,708.75. 
+This Alternative Environmental Justice Policy E option adds a modifier to the minority criterion. Specifically, block groups qualify for environmental justice status by minority only if the median income of the block group does not exceed 125% of the statewide median or \$92,708.75. 
 
 Under this Alternative Environmental Justice Policy E policy alternative, environmental justice communities are defined as neighborhoods (U.S. Census Bureau census block groups) that meet *one or more* of the following criteria: 
 
