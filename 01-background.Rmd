@@ -13,7 +13,7 @@ Due to historic and ongoing discriminatory or disparate treatment of certain com
 
 Although the criteria used to define environmental justice communities were the result of significant discussion and input from a variety of stakeholders, there was recurring concern that the criteria inappropriately classified some block groups as environmental justice communities. This was particularly the case for the foreign born criterion, which could include wealthier and more highly educated neighborhoods of East and South Asian immigrants. As a result, the foreign born criterion seems to have been quietly dropped from consideration by 2010 based on a review of documents circulating at the time. From 2010 onwards, the de facto environmental justice policy was based on income, percent minority, and percentage of English isolated households. The most recent updated 2017 Environmental Justice policy maintained these three criteria in its definition of environmental justice communities, albeit with an important change in how income was measured.
 
-The remainder of this analysis looks at the implications of the 2010-2016 policy, the 2017 policy update, and four alternative environmental justice policies. 
+The remainder of this analysis looks at the implications of the 2010-2016 policy, the 2017 policy update, and ten alternative environmental justice policies. 
 
 ```{r data, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # This is an analysis to investigate impact of different thresholds for EJ communities in Massachusetts
