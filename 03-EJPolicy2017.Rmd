@@ -69,7 +69,7 @@ TownMedIncPopUp <- paste0("<b>Town:</b> ", macosub_shp_WGS84$TOWN, "<br/>",
                           "<b>Median Household Income: </b>", paste0("$",round(macosub_shp_WGS84$medhhinc)))
 
 leaflet() %>% 
-  addProviderTiles(providers$Stamen.TonerLite) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(data = town_shp_WGS84,
               weight = 0.7,
               opacity = 1,
@@ -101,7 +101,7 @@ leaflet() %>%
                 bringToFront = TRUE)) %>% 
   addLegend(colors = EJcolsHex, 
             labels = c("Minority","Income","English Isolation","Minority and Income","Minority and English Isolation","Income and English Isolation","Minority, Income, and English Isolation"), title = "Environmental Justice Populations", position = "bottomleft") %>% 
-  setView(lng = -72, 42.1, zoom = 8) %>% 
+  setView(lng = -71.75, 42.1, zoom = 8) %>% 
   # addMiniMap() %>% 
   addScaleBar(position = "bottomright") %>% 
   addSearchFeatures(targetGroups  = 'muni', 

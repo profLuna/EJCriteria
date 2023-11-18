@@ -71,7 +71,7 @@ EJ2010PopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT2010$NAME, "<br/>",
 
 # draw the map of EJ Polygons according to 2010 policy
 leaflet() %>% 
-  addProviderTiles(providers$Stamen.TonerLite) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(data = town_shp_WGS84,
               weight = 0.7,
               opacity = 1,
@@ -95,7 +95,7 @@ leaflet() %>%
                 bringToFront = TRUE)) %>% 
   addLegend(colors = EJcolsHex, 
             labels = c("Minority","Income","English Isolation","Minority and Income","Minority and English Isolation","Income and English Isolation","Minority, Income, and English Isolation"), title = "Environmental Justice Populations", position = "bottomleft") %>% 
-  setView(lng = -72, 42.1, zoom = 8) %>% 
+  setView(lng = -71.75, 42.1, zoom = 8) %>% 
   # addMiniMap() %>% 
   addScaleBar(position = "bottomright") %>% 
   addSearchFeatures(targetGroups  = 'muni', 

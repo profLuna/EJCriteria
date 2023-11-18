@@ -76,7 +76,7 @@ EJAPopUp <- paste0(blkgrp_shp_WGS84_naEJCRIT_min30$NAME, "<br/>",
 
 # draw the map of EJ Polygons according to EJ Policy A. Faded red/salmong colored polygons represent blockgroups that lose EJ status when the minority threshold is changed from 25% to 30%. 
 leaflet() %>% 
-  addProviderTiles(providers$Stamen.TonerLite) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(data = town_shp_WGS84,
               weight = 0.7,
               opacity = 1,
@@ -118,7 +118,7 @@ leaflet() %>%
                 bringToFront = TRUE)) %>% 
   addLegend(colors = EJcolsHex, 
             labels = c("Minority","Income","English Isolation","Minority and Income","Minority and English Isolation","Income and English Isolation","Minority, Income, and English Isolation"), title = "Environmental Justice Populations", position = "bottomleft") %>% 
-  setView(lng = -72, 42.1, zoom = 8) %>% 
+  setView(lng = -71.75, 42.1, zoom = 8) %>% 
   # addMiniMap() %>% 
   addScaleBar(position = "bottomright") %>% 
   addSearchFeatures(targetGroups  = 'muni', 
