@@ -28,14 +28,25 @@ library(gplots)
 library(treemapify)
 library(knitr)
 
-# read in blockgroup and town shapefiles downloaded from MassGIS and reproject to WGS84
-town_shp_WGS84 <- st_read(dsn = "../townssurvey_shp", layer = "TOWNSSURVEY_POLYM", quiet = TRUE) %>% 
-  select(TOWN) %>% 
-  st_transform(., 4326)
+sf_use_s2(FALSE) # disable use of spherical geometry
 
-blkgrp_shp_WGS84 <- st_read(dsn = "../CENSUS2010_BLK_BG_TRCT_SHP", layer = "CENSUS2010BLOCKGROUPS_POLY", quiet = TRUE) %>% 
+# read in blockgroup and town shapefiles downloaded from MassGIS and reproject to WGS84
+# town_shp_WGS84 <- st_read(dsn = "../townssurvey_shp", layer = "TOWNSSURVEY_POLYM", quiet = TRUE) %>% 
+  town_shp_WGS84 <- tigris::county_subdivisions(state = "MA", year = 2010, cb = TRUE) %>% 
+  # select(TOWN) %>% 
+  transmute(TOWN = str_remove_all(NAME, " Town")) %>% 
+    mutate(TOWN = case_when(
+      TOWN == "Manchester-by-the-Sea" ~ "Manchester",# match MassGIS spelling
+      TRUE ~ TOWN
+    )) %>% 
+  st_transform(., 4326) %>% 
+  st_make_valid()
+
+# blkgrp_shp_WGS84b <- st_read(dsn = "../CENSUS2010_BLK_BG_TRCT_SHP", layer = "CENSUS2010BLOCKGROUPS_POLY", quiet = TRUE) %>%
+blkgrp_shp_WGS84 <- tigris::block_groups(state = "MA", year = 2010) %>% 
   select(GEOID10) %>% 
   st_transform(., 4326) %>% 
+  st_make_valid() %>% 
   # spatial join towns to blockgroups so that town names are associated with each blockgroup
   st_join(., town_shp_WGS84, largest = TRUE)
   
@@ -51,10 +62,10 @@ blkgrp_shp_WGS84 <- st_read(dsn = "../CENSUS2010_BLK_BG_TRCT_SHP", layer = "CENS
 # blkgrp_shp_WGS84 <- st_transform(blkgrp_shp, 4326)
 
 # load tidycensus API key
-census_api_key("f2776fbc29cf847505de9308a82c8d65290d16b3")
+# census_api_key("f2776fbc29cf847505de9308a82c8d65290d16b3")
 
 # download variables at block group level for Massachusetts; note language isolation missing from tidycensus
-maACS17_blkgrp <- get_acs(geography = "block group", 
+maACS17_blkgrp <- get_acs(geography = "block group", year = 2017,
                          variables = c(totalpop = "B03002_001", 
                                        whitepop = "B03002_003", 
                                        medhhinc = "B19013_001",
@@ -66,7 +77,7 @@ maACS17_blkgrp <- get_acs(geography = "block group",
                          state = "MA", output = "wide")
 
 # download table of counts of household income categories, sum up households in categories below statewide median of $74,167
-maACS17_blkgrp_medhhinc <- get_acs(geography = "block group", 
+maACS17_blkgrp_medhhinc <- get_acs(geography = "block group", year = 2017,
                           table = "B19001",
                           state = "MA", output = "wide") %>% 
   transmute(GEOID = GEOID,
@@ -87,20 +98,30 @@ maACS17_blkgrp_medhhinc <- get_acs(geography = "block group",
             pctmedhhinc_lt75 = medhhinc_lt75/households*100) # statewide median of $74,167. Closest range is 60 - 74,9
 
 # load median household income by county subdivision table B19013 from AFF
-maACS17_towns <- read_csv("../B19013_aff_download/ACS_17_5YR_B19013_with_ann.csv") %>% 
-  transmute(GEO.id2 = as.character(GEO.id2),
-            medhhinc = as.integer(HD01_VD01))
+# maACS17_towns <- read_csv("../B19013_aff_download/ACS_17_5YR_B19013_with_ann.csv") %>% 
+#   transmute(GEO.id2 = as.character(GEO.id2),
+#             medhhinc = as.integer(HD01_VD01))
+maACS17_towns <- get_acs(geography = "county subdivision", 
+                         variables = c(medhhinc = "B19013_001"), year = 2017, state = "MA",
+                         output = "wide") %>% 
+  transmute(GEO.id2 = GEOID, medhhinc = medhhincE)
 
 # load MA census town layer from MassGIS, create geoid for joining, and then join median incomes
 macosub_shp_WGS84 <- st_read(dsn = "../CENSUS2010TOWNS_SHP", layer = "CENSUS2010TOWNS_POLY", quiet = TRUE) %>% 
-  transmute(GEOID = paste0(FIPS_STCO,COUSUBFP10), TOWN = TOWN) %>% 
+  transmute(GEOID = paste0(FIPS_STCO,COUSUBFP10), TOWN = str_to_title(TOWN)) %>% 
   left_join(.,maACS17_towns, by = c("GEOID"="GEO.id2")) %>% 
   filter(medhhinc > quantile(medhhinc,probs = 0.8,na.rm = T)) %>% # retain only top quintile
   st_transform(., 4326)
+# macosub_shp_WGS84 <- get_acs(geography = "county subdivision", 
+#                          variables = c(medhhinc = "B19013_001"), year = 2017, state = "MA",
+#                          output = "wide", geometry = TRUE) %>% 
+#   transmute(GEO.id2 = GEOID, medhhinc = medhhincE) %>% 
+#   filter(medhhinc > quantile(medhhinc,probs = 0.8,na.rm = T)) %>% # retain only top quintile
+#   st_transform(., 4326)
 
 # create df with all town names and med hh income for town to join to master df
 maACS17_towns_inc <- st_read(dsn = "../CENSUS2010TOWNS_SHP", layer = "CENSUS2010TOWNS_POLY", quiet = TRUE) %>% 
-  transmute(GEOID = paste0(FIPS_STCO,COUSUBFP10), TOWN = TOWN) %>% 
+  transmute(GEOID = paste0(FIPS_STCO,COUSUBFP10), TOWN = str_to_title(TOWN)) %>% 
   left_join(.,maACS17_towns, by = c("GEOID"="GEO.id2")) %>% 
   transmute(MUNI_medhhinc = medhhinc, MUNI_pctmedhhinc = medhhinc/74167*100, TOWN = TOWN) %>% 
   st_drop_geometry()
@@ -133,15 +154,15 @@ blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>%
 
 # add variables to identify existing and proposed EJ criteria
 blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>% 
-  mutate(ENGLISH = if_else(pctlimitenghh >= 25,"E", NULL),
-         INCOME = if_else(pctmedhhinc_lt50 >= 25, "I", NULL),
-         INCOME_medhhinc = if_else(pctmedhhinc <= 65, "I", NULL),
-         MINORITY = if_else(pctminority >= 25, "M", NULL),
-         # MINORITY27.8 = if_else(pctminority >= 27.8, "M", NULL), # statewide percentage minority is 27.8% for 2018
-         MINORITY30 = if_else(pctminority >= 30, "M", NULL), # round up to 30% to see what happens
-         MINORITY40a = if_else(pctminority >= 40 | (pctminority >= 25 & pctmedhhinc <= 150), "M", NULL), # m40 or m25 & inc150
-         MINORITY40b = if_else(pctminority >= 40 | (pctminority >= 25 & MUNI_pctmedhhinc <= 150), "M", NULL), # m40 or m25 & inc150
-         MINORITY50 = if_else(pctminority >= 50, "M", NULL), # round up to 50% to see what happens
+  mutate(ENGLISH = if_else(pctlimitenghh >= 25,"E", NA),
+         INCOME = if_else(pctmedhhinc_lt50 >= 25, "I", NA),
+         INCOME_medhhinc = if_else(pctmedhhinc <= 65, "I", NA),
+         MINORITY = if_else(pctminority >= 25, "M", NA),
+         # MINORITY27.8 = if_else(pctminority >= 27.8, "M", NA), # statewide percentage minority is 27.8% for 2018
+         MINORITY30 = if_else(pctminority >= 30, "M", NA), # round up to 30% to see what happens
+         MINORITY40a = if_else(pctminority >= 40 | (pctminority >= 25 & pctmedhhinc <= 150), "M", NA), # m40 or m25 & inc150
+         MINORITY40b = if_else(pctminority >= 40 | (pctminority >= 25 & MUNI_pctmedhhinc <= 150), "M", NA), # m40 or m25 & inc150
+         MINORITY50 = if_else(pctminority >= 50, "M", NA), # round up to 50% to see what happens
          EJCRIT = paste(ENGLISH, INCOME, MINORITY, sep = " "), # identify EJ criteria met for 2017 policy
          EJCRIT = str_trim(gsub("NA","",EJCRIT)), # replace NAs with blank space and strip out leading and trailing whitespace
          CRITCNT = nchar(EJCRIT) - str_count(EJCRIT, " "), # count the number of EJ criteria met for 2017 policy
@@ -156,18 +177,18 @@ blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>%
          EJCRIT_min50 = str_trim(gsub("NA","",EJCRIT_min50)), # replace NAs with blank space and strip out leading and trailing whitespace
          CRITCNT_min50 = nchar(EJCRIT_min50) - str_count(EJCRIT_min50, " "), # count the number of EJ criteria met
          LOSEJ_min50 = CRITCNT_min50 == 0 & CRITCNT_min50 < CRITCNT2010, # blkgrps that change to not EJ from 2010 
-         ENGLISH_inc65= if_else(pctlimitenghh >= 25 & pctmedhhinc <= 65, "E", NULL), # English isolated AND  income criterion
-         ENGLISH_inc125= if_else(pctlimitenghh >= 25 & pctmedhhinc <= 125, "E", NULL), # English isolated AND < 125% med hh inc
-         MINORITY_inc125 = if_else(pctminority >= 25 & pctmedhhinc <= 125, "M", NULL), # minority AND < 125% med hh inc
-         MINORITY_inc150 = if_else(pctminority >= 25 & pctmedhhinc <= 150, "M", NULL), # minority AND < 150% med hh inc
-         MINORITY30_inc125 = if_else(pctminority >= 30 & pctmedhhinc <= 125, "M", NULL), # minority30 AND < 125% med hh inc
-         MINORITY30_inc150 = if_else(pctminority >= 30 & pctmedhhinc <= 150, "M", NULL), # minority30 AND < 150% med hh inc
+         ENGLISH_inc65= if_else(pctlimitenghh >= 25 & pctmedhhinc <= 65, "E", NA), # English isolated AND  income criterion
+         ENGLISH_inc125= if_else(pctlimitenghh >= 25 & pctmedhhinc <= 125, "E", NA), # English isolated AND < 125% med hh inc
+         MINORITY_inc125 = if_else(pctminority >= 25 & pctmedhhinc <= 125, "M", NA), # minority AND < 125% med hh inc
+         MINORITY_inc150 = if_else(pctminority >= 25 & pctmedhhinc <= 150, "M", NA), # minority AND < 150% med hh inc
+         MINORITY30_inc125 = if_else(pctminority >= 30 & pctmedhhinc <= 125, "M", NA), # minority30 AND < 125% med hh inc
+         MINORITY30_inc150 = if_else(pctminority >= 30 & pctmedhhinc <= 150, "M", NA), # minority30 AND < 150% med hh inc
          EJCRIT_inc125 = paste(ENGLISH_inc125, INCOME_medhhinc, MINORITY_inc125, sep = " "),
          EJCRIT_inc125 = str_trim(gsub("NA","",EJCRIT_inc125)),
          CRITCNT_inc125 = nchar(EJCRIT_inc125) - str_count(EJCRIT_inc125, " "),
          LOSEJ_inc125 = CRITCNT_inc125 == 0 & CRITCNT_inc125 < CRITCNT2010, # blkgrps that change to not EJ from 2010 policy
-         ENGLISH_inc125pctColl = if_else(pctlimitenghh >= 25 & pctmedhhinc <= 125 & pctCollege <= 50, "E", NULL), 
-         MINORITY_inc125pctColl = if_else(pctminority >= 25 & pctmedhhinc <= 125 & pctCollege <= 50, "M", NULL), 
+         ENGLISH_inc125pctColl = if_else(pctlimitenghh >= 25 & pctmedhhinc <= 125 & pctCollege <= 50, "E", NA), 
+         MINORITY_inc125pctColl = if_else(pctminority >= 25 & pctmedhhinc <= 125 & pctCollege <= 50, "M", NA), 
          EJCRIT_inc125pctColl = paste(ENGLISH_inc125pctColl, INCOME_medhhinc, MINORITY_inc125pctColl, sep = " "),
          EJCRIT_inc125pctColl = str_trim(gsub("NA","",EJCRIT_inc125pctColl)),
          CRITCNT_inc125pctColl = nchar(EJCRIT_inc125pctColl) - str_count(EJCRIT_inc125pctColl, " "),
@@ -201,7 +222,9 @@ blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>%
          EJCRIT_m40_m25Muninc150 = paste(ENGLISH, INCOME_medhhinc, MINORITY40b, sep = " "),
          EJCRIT_m40_m25Muninc150 = str_trim(gsub("NA","",EJCRIT_m40_m25Muninc150)),
          CRITCNT_m40_m25Muninc150 = nchar(EJCRIT_m40_m25Muninc150) - str_count(EJCRIT_m40_m25Muninc150, " "),
-         LOSEJ_m40_m25Muninc150 = CRITCNT_m40_m25Muninc150 == 0 & CRITCNT_m40_m25Muninc150 < CRITCNT2010)
+         LOSEJ_m40_m25Muninc150 = CRITCNT_m40_m25Muninc150 == 0 & CRITCNT_m40_m25Muninc150 < CRITCNT2010) %>% 
+  filter(totalpopE >= 1,
+         !str_starts(NAME, "Block Group 0")) # weird water only polygon in Boston
 
 # join data to spatial layer
 # blkgrp_shp_WGS84 <- blkgrp_shp_WGS84 %>% 
